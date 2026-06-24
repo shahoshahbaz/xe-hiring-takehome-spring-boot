@@ -1,0 +1,19 @@
+# Java / Maven
+backend/target/
+*.class
+
+# The Maven Wrapper downloads its distribution on first run
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# Node
+node_modules/
+dist/
+
+# Editors / OS
+.idea/
+.vscode/
+.claude/
+*.iml
+*.iws
+*.ipr
+.DS_Store

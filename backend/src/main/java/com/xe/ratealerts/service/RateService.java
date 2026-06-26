@@ -2,6 +2,7 @@ package com.xe.ratealerts.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xe.ratealerts.dto.CurrencyResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -96,7 +97,7 @@ public class RateService {
      * Fetches all supported currency codes from the XE API.
      * Used to validate pairs dynamically instead of hardcoding them.
      */
-    public List<String> getSupportedCurrencies() {
+    public List<CurrencyResponse> getSupportedCurrencies() {
         try {
             log.debug("Fetching supported currencies from XE API");
 
@@ -110,15 +111,15 @@ public class RateService {
             JsonNode doc = objectMapper.readTree(response.getBody());
             JsonNode currencies = doc.get("currencies");
 
-            List<String> codes = new ArrayList<>();
-            currencies.forEach(c -> {
-                if (!c.get("is_obsolete").asBoolean()) {
-                    codes.add(c.get("iso").asText());
-                }
-            });
+            List<CurrencyResponse> currencyResponses = new ArrayList<>();
+            currencies.forEach(c -> currencyResponses.add(new CurrencyResponse(
+                    c.get("iso").asText(),
+                    c.get("currency_name").asText(),
+                    c.has("currency_symbol") ? c.get("currency_symbol").asText() : ""
+            )));
 
-            log.debug("Fetched {} supported currencies", codes.size());
-            return codes;
+            log.debug("Fetched {} supported currencies", currencyResponses.size());
+            return currencyResponses;
 
         } catch (Exception e) {
             log.error("Failed to fetch supported currencies: {}", e.getMessage());

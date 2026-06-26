@@ -1,6 +1,10 @@
 package com.xe.ratealerts.controller;
 
+import com.xe.ratealerts.dto.CurrencyResponse;
 import com.xe.ratealerts.service.RateService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +22,8 @@ import java.util.Map;
 @RequestMapping("/api/rates")
 public class RatesController {
 
+    private static final Logger log = LoggerFactory.getLogger(RatesController.class);
+
     private final RateService rateService;
 
     public RatesController(RateService rateService) {
@@ -34,6 +40,11 @@ public class RatesController {
     );
 }
 
+    @GetMapping("/pairs")
+    public ResponseEntity<List<CurrencyResponse>> getSupportedPairs() {
+        log.debug("Fetching supported currency pairs");
+        return ResponseEntity.ok(rateService.getSupportedCurrencies());
+    }
     private Map<String, Object> fetchRate(String from, String to) {
 
         return Map.of(

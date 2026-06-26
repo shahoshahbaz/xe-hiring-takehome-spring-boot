@@ -70,7 +70,10 @@ public class AlertService {
     boolean isTriggered(Alert alert) {
         BigDecimal liveRate = rateService.getMidRate(alert.pair());
         int comparison = liveRate.compareTo(alert.threshold());
-        boolean triggered = "above".equals(alert.direction()) ? comparison > 0 : comparison < 0;
+        boolean triggered = switch (alert.direction()) {
+            case ABOVE -> comparison > 0;
+            case BELOW -> comparison < 0;
+        };
         if (triggered) {
             log.info("Alert TRIGGERED: pair={}, liveRate={}, threshold={}, direction={}",
                     alert.pair(), liveRate, alert.threshold(), alert.direction());

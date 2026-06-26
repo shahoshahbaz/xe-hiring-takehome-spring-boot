@@ -13,6 +13,6 @@ public record Alert(
         UUID id,
         String pair,
         BigDecimal threshold,
-        String direction,
+        Direction direction,
         Instant createdAt
 ) {}

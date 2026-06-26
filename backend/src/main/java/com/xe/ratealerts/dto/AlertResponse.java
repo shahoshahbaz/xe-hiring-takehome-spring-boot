@@ -1,5 +1,7 @@
 package com.xe.ratealerts.dto;
 
+import com.xe.ratealerts.model.Direction;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -12,7 +14,7 @@ public record AlertResponse(
         UUID id,
         String pair,
         BigDecimal threshold,
-        String direction,
+        Direction direction,
         boolean triggered,
         Instant createdAt
 ) {}

@@ -3,6 +3,7 @@ package com.xe.ratealerts.service;
 
 import com.xe.ratealerts.dto.AlertResponse;
 import com.xe.ratealerts.dto.CreateAlertRequest;
+import com.xe.ratealerts.dto.CurrencyResponse;
 import com.xe.ratealerts.model.Direction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,7 +33,10 @@ class AlertServiceTest {
 
     @BeforeEach
     void setUp() {
-        // no global mock here
+        lenient().when(rateService.getSupportedCurrencies()).thenReturn(List.of(
+                new CurrencyResponse("USD", "US Dollar", "$"),
+                new CurrencyResponse("CAD", "Canadian Dollar", "$")
+        ));
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.xe.ratealerts.controller;
 import com.xe.ratealerts.dto.AlertResponse;
 import com.xe.ratealerts.dto.CreateAlertRequest;
 import com.xe.ratealerts.service.AlertService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,7 +37,7 @@ public class AlertsController {
     }
 
     @PostMapping
-    public ResponseEntity<AlertResponse> create(@RequestBody CreateAlertRequest request) {
+    public ResponseEntity<AlertResponse> create(@Valid @RequestBody CreateAlertRequest request) {
         AlertResponse response = alertService.create(request);
         return ResponseEntity
                 .created(URI.create("/api/alerts/" + response.id()))

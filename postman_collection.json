@@ -1,0 +1,141 @@
+{
+  "info": {
+    "name": "XE Rate Alerts API",
+    "description": "Postman collection for XE Rate Alerts take-home project",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Rates",
+      "item": [
+        {
+          "name": "Get Live Rates",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:5180/api/rates",
+            "description": "Get live rates for USD/CAD, GBP/USD, EUR/USD"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "List All Alerts",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:5180/api/alerts",
+            "description": "List all alerts with triggered state"
+          }
+        },
+        {
+          "name": "Create Alert - Triggered (USD/CAD above 1.23)",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:5180/api/alerts",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pair\": \"USD/CAD\",\n  \"threshold\": 1.23,\n  \"direction\": \"above\"\n}"
+            },
+            "description": "Should trigger - live rate 1.2345 > 1.23"
+          }
+        },
+        {
+          "name": "Create Alert - Not Triggered (USD/CAD above 1.25)",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:5180/api/alerts",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pair\": \"USD/CAD\",\n  \"threshold\": 1.25,\n  \"direction\": \"above\"\n}"
+            },
+            "description": "Should not trigger - live rate 1.2345 < 1.25"
+          }
+        },
+        {
+          "name": "Create Alert - Invalid Pair",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:5180/api/alerts",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pair\": \"XYZ/ABC\",\n  \"threshold\": 1.23,\n  \"direction\": \"above\"\n}"
+            },
+            "description": "Should return 400 - invalid pair"
+          }
+        },
+        {
+          "name": "Create Alert - Invalid Direction",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:5180/api/alerts",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pair\": \"USD/CAD\",\n  \"threshold\": 1.23,\n  \"direction\": \"invalid\"\n}"
+            },
+            "description": "Should return 400 - invalid direction"
+          }
+        },
+        {
+          "name": "Create Alert - Null Threshold",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:5180/api/alerts",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pair\": \"USD/CAD\",\n  \"threshold\": null,\n  \"direction\": \"above\"\n}"
+            },
+            "description": "Should return 400 - null threshold"
+          }
+        },
+        {
+          "name": "Delete Alert",
+          "request": {
+            "method": "DELETE",
+            "url": "http://localhost:5180/api/alerts/{{alertId}}",
+            "description": "Delete alert by ID - replace {{alertId}} with actual UUID"
+          }
+        },
+        {
+          "name": "Delete Alert - Not Found",
+          "request": {
+            "method": "DELETE",
+            "url": "http://localhost:5180/api/alerts/00000000-0000-0000-0000-000000000000",
+            "description": "Should return 404 - unknown ID"
+          }
+        }
+      ]
+    }
+  ]
+}

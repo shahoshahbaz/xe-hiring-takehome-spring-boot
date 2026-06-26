@@ -2,6 +2,8 @@ package com.xe.ratealerts.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -22,6 +24,7 @@ import java.util.Base64;
  */
 @Service
 public class RateService {
+    private static final Logger log = LoggerFactory.getLogger(RateService.class);
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
@@ -56,6 +59,7 @@ public class RateService {
      */
     public BigDecimal getMidRate(String from, String to) {
         try {
+            log.debug("Fetching rate for {}/{}", from, to);
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "Basic " + credentials);
 
@@ -66,11 +70,15 @@ public class RateService {
                     String.class);
 
             JsonNode doc = objectMapper.readTree(response.getBody());
-            return doc.get("to").get(0).get("mid")
+            BigDecimal rate = doc.get("to").get(0).get("mid")
                     .decimalValue()
                     .setScale(4, RoundingMode.HALF_UP);
 
+            log.debug("Rate fetched: {}/{} = {}", from, to, rate);
+            return rate;
+
         } catch (Exception e) {
+            log.error("Failed to fetch rate for {}/{}: {}", from, to, e.getMessage());
             throw new RuntimeException("Failed to fetch rate for " + from + "/" + to, e);
         }
     }

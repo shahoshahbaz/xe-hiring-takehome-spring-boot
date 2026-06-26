@@ -2,6 +2,7 @@ package com.xe.ratealerts.service;
 
 import com.xe.ratealerts.dto.AlertResponse;
 import com.xe.ratealerts.dto.CreateAlertRequest;
+import com.xe.ratealerts.dto.CurrencyResponse;
 import com.xe.ratealerts.model.Alert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,11 +28,34 @@ public class AlertService {
     private final Map<UUID, Alert> alerts = new ConcurrentHashMap<>();
     private final RateService rateService;
 
+    private volatile List<String> supportedCurrencyCache = null;
+
     public AlertService(RateService rateService) {
         this.rateService = rateService;
     }
 
+    private boolean isValidPair(String pair) {
+        String[] parts = pair.split("/");
+        if (parts.length != 2) return false;
+        //  Thread-safe lazy initialization of supported currencies cache
+        //  Use synchronized block to avoid multiple threads fetching the same data simultaneously
+        synchronized (this) {
+            if (supportedCurrencyCache == null) {
+                List<CurrencyResponse> supportedCurrencies = rateService.getSupportedCurrencies();
+                supportedCurrencyCache = supportedCurrencies.stream()
+                        .map(CurrencyResponse::iso)
+                        .toList();
+                log.debug("Supported currencies cached: {}", supportedCurrencyCache);
+            }
+        }
+        return supportedCurrencyCache.contains(parts[0]) &&
+                supportedCurrencyCache.contains(parts[1]);
+    }
     public AlertResponse create(CreateAlertRequest request) {
+        if (!isValidPair(request.pair())) {
+            throw new IllegalArgumentException(
+                    "Invalid pair: " + request.pair() + ". Both currencies must be supported by XE API.");
+        }
         Alert alert = new Alert(
                 UUID.randomUUID(),
                 request.pair(),

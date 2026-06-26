@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { state } from './state'
 
-// Alert form state
-const newPair = ref('USD/CAD')
+const newFromCurrency = ref('USD')
+const newToCurrency = ref('CAD')
 const newThreshold = ref('')
 const newDirection = ref('above')
+
+const newPair = computed(() => `${newFromCurrency.value}/${newToCurrency.value}`)
 
 function loadRates() {
   fetch('/api/rates')
@@ -24,9 +26,12 @@ function loadAlerts() {
     })
 }
 
-function getRate(pair: string) {
-  const found = state.rates.find((r) => r.pair === pair)
-  return found ? found.rate.toFixed(4) : '...'
+function loadCurrencies() {
+  fetch('/api/rates/pairs')
+    .then((r) => r.json())
+    .then((data) => {
+      state.currencies = data
+    })
 }
 
 function createAlert() {
@@ -46,12 +51,20 @@ function createAlert() {
 }
 
 function deleteAlert(id: string) {
+  if (!confirm('Are you sure you want to delete this alert?')) return
   fetch(`/api/alerts/${id}`, { method: 'DELETE' }).then(() => loadAlerts())
+}
+
+function refresh() {
+  loadRates()
+  loadAlerts()
+  loadCurrencies()
 }
 
 onMounted(() => {
   loadRates()
   loadAlerts()
+  loadCurrencies()
 })
 </script>
 
@@ -69,17 +82,24 @@ onMounted(() => {
       </div>
     </section>
 
-    <button class="refresh" @click="loadRates(); loadAlerts()">Refresh rates</button>
+    <button class="refresh" @click="refresh">Refresh</button>
 
-    <!-- Alert creation form -->
     <section class="alerts-section">
       <h2>Rate Alerts</h2>
 
       <div class="alert-form">
-        <select v-model="newPair">
-          <option>USD/CAD</option>
-          <option>GBP/USD</option>
-          <option>EUR/USD</option>
+        <select v-model="newFromCurrency">
+          <option v-for="c in state.currencies" :key="c.iso" :value="c.iso">
+            {{ c.iso }} - {{ c.currencyName }}
+          </option>
+        </select>
+
+        <span class="separator">/</span>
+
+        <select v-model="newToCurrency">
+          <option v-for="c in state.currencies" :key="c.iso" :value="c.iso">
+            {{ c.iso }} - {{ c.currencyName }}
+          </option>
         </select>
 
         <select v-model="newDirection">
@@ -97,19 +117,23 @@ onMounted(() => {
         <button class="refresh" @click="createAlert">Add Alert</button>
       </div>
 
-      <!-- Alert list -->
       <div v-if="state.alerts.length === 0" class="no-alerts">No alerts yet.</div>
 
       <div
         v-for="alert in state.alerts"
         :key="alert.id"
         class="alert-row"
-        :class="{ triggered: alert.triggered }"
+        :class="{ triggered: alert.triggered, error: alert.evaluationError }"
       >
         <span class="alert-info">
           {{ alert.pair }} {{ alert.direction }} {{ alert.threshold }}
         </span>
-        <span class="alert-status">{{ alert.triggered ? '🔔 Triggered' : '⏳ Watching' }}</span>
+        <span class="alert-status" v-if="alert.evaluationError">
+          ⚠️ {{ alert.evaluationError }}
+        </span>
+        <span class="alert-status" v-else>
+          {{ alert.triggered ? '🔔 Triggered' : '⏳ Watching' }}
+        </span>
         <button class="delete-btn" @click="deleteAlert(alert.id)">Delete</button>
       </div>
     </section>
@@ -207,6 +231,7 @@ h1 {
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 20px;
+  align-items: center;
 }
 
 .alert-form select,
@@ -215,6 +240,12 @@ h1 {
   border: 1px solid #e1e6ee;
   border-radius: 8px;
   font-size: 0.9rem;
+}
+
+.separator {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #66718a;
 }
 
 .alert-row {
@@ -231,6 +262,11 @@ h1 {
 .alert-row.triggered {
   border-color: #f0a500;
   background: #fffbf0;
+}
+
+.alert-row.error {
+  border-color: #cc3333;
+  background: #fff0f0;
 }
 
 .alert-info {

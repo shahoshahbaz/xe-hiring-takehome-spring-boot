@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "XE Rate Alerts API",
-    "description": "Postman collection for XE Rate Alerts take-home project",
+    "name": "XE Rate Alerts API - Feature Branch",
+    "description": "Postman collection for XE Rate Alerts - feature/dynamic-currency-pairs branch. Includes dynamic pair validation and supported currencies endpoint.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -15,6 +15,14 @@
             "url": "http://localhost:5180/api/rates",
             "description": "Get live rates for USD/CAD, GBP/USD, EUR/USD"
           }
+        },
+        {
+          "name": "Get Supported Currency Pairs",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:5180/api/rates/pairs",
+            "description": "Get all supported currencies from XE API including crypto"
+          }
         }
       ]
     },
@@ -26,7 +34,7 @@
           "request": {
             "method": "GET",
             "url": "http://localhost:5180/api/alerts",
-            "description": "List all alerts with triggered state"
+            "description": "List all alerts with triggered state and evaluationError if rate fetch fails"
           }
         },
         {
@@ -66,6 +74,42 @@
           }
         },
         {
+          "name": "Create Alert - Dynamic Pair (GBP/CAD)",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:5180/api/alerts",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pair\": \"GBP/CAD\",\n  \"threshold\": 1.20,\n  \"direction\": \"above\"\n}"
+            },
+            "description": "Dynamic pair not in original hardcoded list - should work on feature branch"
+          }
+        },
+        {
+          "name": "Create Alert - Crypto Pair (BTC/CAD)",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:5180/api/alerts",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pair\": \"BTC/CAD\",\n  \"threshold\": 50000,\n  \"direction\": \"above\"\n}"
+            },
+            "description": "Crypto pair - passes validation but returns evaluationError (sandbox key does not support crypto rates)"
+          }
+        },
+        {
           "name": "Create Alert - Invalid Pair",
           "request": {
             "method": "POST",
@@ -80,7 +124,7 @@
               "mode": "raw",
               "raw": "{\n  \"pair\": \"XYZ/ABC\",\n  \"threshold\": 1.23,\n  \"direction\": \"above\"\n}"
             },
-            "description": "Should return 400 - invalid pair"
+            "description": "Should return 400 - pair not in XE supported currencies"
           }
         },
         {
@@ -98,7 +142,7 @@
               "mode": "raw",
               "raw": "{\n  \"pair\": \"USD/CAD\",\n  \"threshold\": 1.23,\n  \"direction\": \"invalid\"\n}"
             },
-            "description": "Should return 400 - invalid direction"
+            "description": "Should return 400 - direction must be above or below"
           }
         },
         {
@@ -124,7 +168,7 @@
           "request": {
             "method": "DELETE",
             "url": "http://localhost:5180/api/alerts/{{alertId}}",
-            "description": "Delete alert by ID - replace {{alertId}} with actual UUID"
+            "description": "Delete alert by ID - replace {{alertId}} with actual UUID from create response"
           }
         },
         {

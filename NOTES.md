@@ -85,10 +85,10 @@ This starts both backend (port 5180) and frontend (port 5173).
 3. API documentation: `http://localhost:5180/swagger-ui/index.html`
 
 4. To test the API with Postman:
-    - Open Postman
-    - Click Import
-    - Select `postman_collection.json` from the project root
-    - Run the requests in order
+   - Open Postman
+   - Click Import
+   - Select `postman_collection.json` from the project root
+   - Run the requests in order
 
 ## Additional Files
 - `run.sh` — starts both backend and frontend with a single command

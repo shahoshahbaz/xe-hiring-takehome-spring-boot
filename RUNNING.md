@@ -70,52 +70,48 @@ Frontend runs on `http://localhost:5173`
 | POST | `/api/alerts` | Create a new alert | **New** |
 | DELETE | `/api/alerts/{id}` | Delete an alert | **New** |
 
-## What Changed in `feature/dynamic-currency-pairs` vs `main`
+## What Changed in `main` vs original:
 
-### New files (feature branch only):
-- `Direction.java` — enum replacing `String` direction, fixes Open/Closed SOLID violation
-- `CurrencyResponse.java` — DTO for supported currencies from XE API
+### New files:
+- `AlertsController.java` — REST endpoints for alerts
+- `RateService.java` — XE API wrapper, eliminates copy-paste
+- `AlertService.java` — core alert logic, in-memory storage
+- `Alert.java` — alert model
+- `AlertResponse.java` — alert response DTO
+- `CreateAlertRequest.java` — alert creation DTO
+- `GlobalExceptionHandler.java` — clean JSON error responses
 
-### Refactored files (both branches, enhanced in feature branch):
-- `RateService.java` — added `getSupportedCurrencies()`, externalized URL config
-- `AlertService.java` — added dynamic pair validation with cached currency list
-- `RatesController.java` — added `GET /api/rates/pairs` endpoint
-- `AlertResponse.java` — added `evaluationError` field
-- `CreateAlertRequest.java` — replaced hardcoded `@Pattern` with `Direction` enum
-- `App.vue` — dynamic currency dropdowns instead of hardcoded pairs
-- `state.ts` — added `Currency` interface
-
-### Same on both branches:
-- `AlertsController.java`
-- `Alert.java`
-- `GlobalExceptionHandler.java`
-- `AlertServiceTest.java`
+### Refactored files:
+- `RatesController.java` — extracted HTTP logic to RateService
+- `App.vue` — added alert UI, typed state, removed duplicate functions
+- `state.ts` — typed interfaces replacing `any[]`
+ 
+ ### Deleted files:
+- `AlertsStubController.java` — removed stub controller, replaced with real `AlertsController.java`
 ## Project Structure
 
 **Backend** `backend/src/main/java/com/xe/ratealerts/`
 
-| File | Package | main | feature branch |
-|------|---------|------|----------------|
-| `RatesController.java` | controller | Refactored from original | Added `GET /api/rates/pairs` |
-| `AlertsController.java` | controller | New | Unchanged |
-| `RateService.java` | service | New — XE API wrapper | Added `getSupportedCurrencies()`, externalized URL config |
-| `AlertService.java` | service | New — core alert logic | Added dynamic pair validation, cache |
-| `Alert.java` | model | New | Uses `Direction` enum |
-| `AlertResponse.java` | dto | New | Added `evaluationError` field |
-| `CreateAlertRequest.java` | dto | New | Uses `Direction` enum, removed hardcoded `@Pattern` |
-| `GlobalExceptionHandler.java` | exception | New | Added `IllegalArgumentException` handler |
-| `Direction.java` | model | ❌ Not present | ✅ New — enum, fixes Open/Closed SOLID |
-| `CurrencyResponse.java` | dto | ❌ Not present | ✅ New — supported currencies DTO |
+| File | Package | Status |
+|------|---------|--------|
+| `RatesController.java` | controller | Refactored — extracted to RateService |
+| `AlertsController.java` | controller | New |
+| `RateService.java` | service | New — XE API wrapper |
+| `AlertService.java` | service | New — core alert logic |
+| `Alert.java` | model | New |
+| `AlertResponse.java` | dto | New |
+| `CreateAlertRequest.java` | dto | New |
+| `GlobalExceptionHandler.java` | exception | New |
 
 **Frontend** `frontend/src/`
 
-| File | main | feature branch |
-|------|------|----------------|
-| `App.vue` | Alert UI, hardcoded pairs | Dynamic currency dropdowns |
-| `state.ts` | Typed interfaces, alerts state | Added `Currency` interface |
+| File | Status |
+|------|--------|
+| `App.vue` | Refactored — alert UI wired |
+| `state.ts` | Refactored — typed interfaces |
 
 **Tests** `backend/src/test/java/com/xe/ratealerts/service/`
 
-| File | main | feature branch |
-|------|------|----------------|
-| `AlertServiceTest.java` | 9 unit tests | Updated for Direction enum, lenient stubbing |
+| File | Tests |
+|------|-------|
+| `AlertServiceTest.java` | 9 unit tests |

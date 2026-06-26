@@ -1,6 +1,11 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { state } from './state'
+
+// Alert form state
+const newPair = ref('USD/CAD')
+const newThreshold = ref('')
+const newDirection = ref('above')
 
 function loadRates() {
   fetch('/api/rates')
@@ -11,35 +16,42 @@ function loadRates() {
     })
 }
 
-function getUsdCad() {
-  for (let i = 0; i < state.rates.length; i++) {
-    if (state.rates[i].pair === 'USD/CAD') {
-      return state.rates[i].rate.toFixed(4)
-    }
-  }
-  return '...'
+function loadAlerts() {
+  fetch('/api/alerts')
+    .then((r) => r.json())
+    .then((data) => {
+      state.alerts = data
+    })
 }
 
-function getGbpUsd() {
-  for (let i = 0; i < state.rates.length; i++) {
-    if (state.rates[i].pair === 'GBP/USD') {
-      return state.rates[i].rate.toFixed(4)
-    }
-  }
-  return '...'
+function getRate(pair: string) {
+  const found = state.rates.find((r) => r.pair === pair)
+  return found ? found.rate.toFixed(4) : '...'
 }
 
-function getEurUsd() {
-  for (let i = 0; i < state.rates.length; i++) {
-    if (state.rates[i].pair === 'EUR/USD') {
-      return state.rates[i].rate.toFixed(4)
-    }
-  }
-  return '...'
+function createAlert() {
+  if (!newThreshold.value) return
+  fetch('/api/alerts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      pair: newPair.value,
+      threshold: parseFloat(newThreshold.value),
+      direction: newDirection.value,
+    }),
+  }).then(() => {
+    newThreshold.value = ''
+    loadAlerts()
+  })
+}
+
+function deleteAlert(id: string) {
+  fetch(`/api/alerts/${id}`, { method: 'DELETE' }).then(() => loadAlerts())
 }
 
 onMounted(() => {
   loadRates()
+  loadAlerts()
 })
 </script>
 
@@ -51,26 +63,56 @@ onMounted(() => {
     </header>
 
     <section class="cards">
-      <div class="card">
-        <div class="pair">USD / CAD</div>
-        <div class="rate">{{ getUsdCad() }}</div>
-        <div class="caption">1 US dollar in Canadian dollars</div>
-      </div>
-
-      <div class="card">
-        <div class="pair">GBP / USD</div>
-        <div class="rate">{{ getGbpUsd() }}</div>
-        <div class="caption">1 British pound in US dollars</div>
-      </div>
-
-      <div class="card">
-        <div class="pair">EUR / USD</div>
-        <div class="rate">{{ getEurUsd() }}</div>
-        <div class="caption">1 euro in US dollars</div>
+      <div class="card" v-for="rate in state.rates" :key="rate.pair">
+        <div class="pair">{{ rate.pair.replace('/', ' / ') }}</div>
+        <div class="rate">{{ rate.rate.toFixed(4) }}</div>
       </div>
     </section>
 
-    <button class="refresh" @click="loadRates()">Refresh rates</button>
+    <button class="refresh" @click="loadRates(); loadAlerts()">Refresh rates</button>
+
+    <!-- Alert creation form -->
+    <section class="alerts-section">
+      <h2>Rate Alerts</h2>
+
+      <div class="alert-form">
+        <select v-model="newPair">
+          <option>USD/CAD</option>
+          <option>GBP/USD</option>
+          <option>EUR/USD</option>
+        </select>
+
+        <select v-model="newDirection">
+          <option value="above">Above</option>
+          <option value="below">Below</option>
+        </select>
+
+        <input
+          v-model="newThreshold"
+          type="number"
+          step="0.0001"
+          placeholder="Threshold e.g. 1.3800"
+        />
+
+        <button class="refresh" @click="createAlert">Add Alert</button>
+      </div>
+
+      <!-- Alert list -->
+      <div v-if="state.alerts.length === 0" class="no-alerts">No alerts yet.</div>
+
+      <div
+        v-for="alert in state.alerts"
+        :key="alert.id"
+        class="alert-row"
+        :class="{ triggered: alert.triggered }"
+      >
+        <span class="alert-info">
+          {{ alert.pair }} {{ alert.direction }} {{ alert.threshold }}
+        </span>
+        <span class="alert-status">{{ alert.triggered ? '🔔 Triggered' : '⏳ Watching' }}</span>
+        <button class="delete-btn" @click="deleteAlert(alert.id)">Delete</button>
+      </div>
+    </section>
   </main>
 </template>
 
@@ -136,11 +178,6 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
-.caption {
-  font-size: 0.8rem;
-  color: #8a93a8;
-}
-
 .refresh {
   margin-top: 24px;
   padding: 10px 18px;
@@ -154,5 +191,74 @@ h1 {
 
 .refresh:hover {
   background: #1d4377;
+}
+
+.alerts-section {
+  margin-top: 40px;
+}
+
+.alerts-section h2 {
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+}
+
+.alert-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.alert-form select,
+.alert-form input {
+  padding: 8px 12px;
+  border: 1px solid #e1e6ee;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.alert-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid #e1e6ee;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.alert-row.triggered {
+  border-color: #f0a500;
+  background: #fffbf0;
+}
+
+.alert-info {
+  flex: 1;
+  font-size: 0.95rem;
+}
+
+.alert-status {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.delete-btn {
+  padding: 6px 12px;
+  border: 1px solid #e1e6ee;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #cc3333;
+}
+
+.delete-btn:hover {
+  background: #fff0f0;
+}
+
+.no-alerts {
+  color: #8a93a8;
+  font-size: 0.9rem;
 }
 </style>

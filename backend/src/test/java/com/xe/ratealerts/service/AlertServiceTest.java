@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
@@ -103,5 +104,44 @@ class AlertServiceTest {
         // no mock needed — never calls RateService
         boolean deleted = alertService.delete(UUID.randomUUID());
         assertThat(deleted).isFalse();
+    }
+
+
+    @Test
+    void invalid_pair_throws_exception() {
+        when(rateService.getSupportedCurrencies()).thenReturn(List.of(
+                new CurrencyResponse("USD", "US Dollar", "$"),
+                new CurrencyResponse("CAD", "Canadian Dollar", "$")
+        ));
+        CreateAlertRequest request = new CreateAlertRequest("XYZ/ABC", new BigDecimal("1.23"), Direction.ABOVE);
+        assertThatThrownBy(() -> alertService.create(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid pair");
+    }
+
+    @Test
+    void valid_dynamic_pair_creates_alert() {
+        when(rateService.getSupportedCurrencies()).thenReturn(List.of(
+                new CurrencyResponse("GBP", "British Pound", "£"),
+                new CurrencyResponse("CAD", "Canadian Dollar", "$")
+        ));
+        when(rateService.getMidRate("GBP/CAD")).thenReturn(new BigDecimal("1.2345"));
+        CreateAlertRequest request = new CreateAlertRequest("GBP/CAD", new BigDecimal("1.20"), Direction.ABOVE);
+        AlertResponse response = alertService.create(request);
+        assertThat(response.pair()).isEqualTo("GBP/CAD");
+        assertThat(response.triggered()).isTrue();
+    }
+
+    @Test
+    void rate_fetch_failure_returns_evaluation_error() {
+        when(rateService.getMidRate("BTC/CAD")).thenThrow(new RuntimeException("Rate unavailable"));
+        when(rateService.getSupportedCurrencies()).thenReturn(List.of(
+                new CurrencyResponse("BTC", "Bitcoin", "₿"),
+                new CurrencyResponse("CAD", "Canadian Dollar", "$")
+        ));
+        CreateAlertRequest request = new CreateAlertRequest("BTC/CAD", new BigDecimal("50000"), Direction.ABOVE);
+        AlertResponse response = alertService.create(request);
+        assertThat(response.triggered()).isFalse();
+        assertThat(response.evaluationError()).isNotNull();
     }
 }

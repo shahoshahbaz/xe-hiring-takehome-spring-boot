@@ -71,6 +71,30 @@ via `GlobalExceptionHandler`. Pair is restricted to the 3 supported pairs.
 ## API documentation
 Swagger UI: `http://localhost:5180/swagger-ui/index.html`
 
+## How to Run
+
+1. From the project root, run:
+```bash
+   chmod +x run.sh
+   ./run.sh
+```
+This starts both backend (port 5180) and frontend (port 5173).
+
+2. Open the app: `http://localhost:5173`
+
+3. API documentation: `http://localhost:5180/swagger-ui/index.html`
+
+4. To test the API with Postman:
+    - Open Postman
+    - Click Import
+    - Select `postman_collection.json` from the project root
+    - Run the requests in order
+
+## Additional Files
+- `run.sh` — starts both backend and frontend with a single command
+- `postman_collection.json` — Postman collection covering all API endpoints
+- `RUNNING.md` — detailed setup instructions, project structure, and branch guide
+
 ## AI tools used
 Used Claude  to generate boilerplate, suggest test cases, and
 review structure decisions. Every architectural decision — storage choice,

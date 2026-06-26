@@ -3,6 +3,7 @@ package com.xe.ratealerts.service;
 
 import com.xe.ratealerts.dto.AlertResponse;
 import com.xe.ratealerts.dto.CreateAlertRequest;
+import com.xe.ratealerts.model.Direction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +37,7 @@ class AlertServiceTest {
     @Test
     void alert_triggered_when_rate_above_threshold() {
         when(rateService.getMidRate("USD/CAD")).thenReturn(new BigDecimal("1.3800"));
-        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.3500"), "above");
+        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.3500"), Direction.ABOVE);
         AlertResponse response = alertService.create(request);
         assertThat(response.triggered()).isTrue();
     }
@@ -44,7 +45,7 @@ class AlertServiceTest {
     @Test
     void alert_not_triggered_when_rate_below_threshold() {
         when(rateService.getMidRate("USD/CAD")).thenReturn(new BigDecimal("1.3800"));
-        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.4000"), "above");
+        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.4000"), Direction.ABOVE);
         AlertResponse response = alertService.create(request);
         assertThat(response.triggered()).isFalse();
     }
@@ -52,7 +53,7 @@ class AlertServiceTest {
     @Test
     void alert_triggered_when_rate_below_threshold_direction_below() {
         when(rateService.getMidRate("USD/CAD")).thenReturn(new BigDecimal("1.3800"));
-        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.4000"), "below");
+        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.4000"), Direction.BELOW);
         AlertResponse response = alertService.create(request);
         assertThat(response.triggered()).isTrue();
     }
@@ -60,7 +61,7 @@ class AlertServiceTest {
     @Test
     void alert_not_triggered_when_rate_above_threshold_direction_below() {
         when(rateService.getMidRate("USD/CAD")).thenReturn(new BigDecimal("1.3800"));
-        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.3500"), "below");
+        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.3500"), Direction.BELOW);
         AlertResponse response = alertService.create(request);
         assertThat(response.triggered()).isFalse();
     }
@@ -68,7 +69,7 @@ class AlertServiceTest {
     @Test
     void alert_not_triggered_when_rate_exactly_at_threshold() {
         when(rateService.getMidRate("USD/CAD")).thenReturn(new BigDecimal("1.3800"));
-        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.3800"), "above");
+        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.3800"), Direction.ABOVE);
         AlertResponse response = alertService.create(request);
         assertThat(response.triggered()).isFalse();
     }
@@ -76,7 +77,7 @@ class AlertServiceTest {
     @Test
     void created_alert_appears_in_list() {
         when(rateService.getMidRate("USD/CAD")).thenReturn(new BigDecimal("1.3800"));
-        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.3500"), "above");
+        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.3500"), Direction.ABOVE);
         AlertResponse created = alertService.create(request);
         List<AlertResponse> all = alertService.listAll();
         assertThat(all).anyMatch(a -> a.id().equals(created.id()));
@@ -85,7 +86,7 @@ class AlertServiceTest {
     @Test
     void deleted_alert_removed_from_list() {
         when(rateService.getMidRate("USD/CAD")).thenReturn(new BigDecimal("1.3800"));
-        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.3500"), "above");
+        CreateAlertRequest request = new CreateAlertRequest("USD/CAD", new BigDecimal("1.3500"), Direction.ABOVE);
         AlertResponse created = alertService.create(request);
         boolean deleted = alertService.delete(created.id());
         assertThat(deleted).isTrue();

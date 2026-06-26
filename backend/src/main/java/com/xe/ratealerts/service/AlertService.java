@@ -109,13 +109,26 @@ public class AlertService {
     }
 
     private AlertResponse toResponse(Alert alert) {
+        boolean triggered = false;
+        String evaluationError = null;
+
+        try {
+            triggered = isTriggered(alert);
+        } catch (RuntimeException e) {
+            log.warn("Could not evaluate alert for pair={}: {}", alert.pair(), e.getMessage());
+            evaluationError = "Rate unavailable for pair: " + alert.pair();
+        }
+
         return new AlertResponse(
                 alert.id(),
                 alert.pair(),
                 alert.threshold(),
                 alert.direction(),
-                isTriggered(alert),
-                alert.createdAt()
+                triggered,
+                alert.createdAt(),
+                evaluationError
         );
     }
+
+
 }

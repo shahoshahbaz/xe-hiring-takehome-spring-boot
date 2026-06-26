@@ -16,5 +16,6 @@ public record AlertResponse(
         BigDecimal threshold,
         Direction direction,
         boolean triggered,
-        Instant createdAt
+        Instant createdAt,
+        String evaluationError
 ) {}

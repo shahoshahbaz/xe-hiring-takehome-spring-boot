@@ -3,18 +3,26 @@
 # Run script for XE Rate Alerts
 # Starts both backend and frontend in separate terminal processes
 
-# Get the project root directory
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "Starting XE Rate Alerts..."
 echo ""
+
+# Ensure both processes are killed on script exit (Ctrl+C, etc.)
+cleanup() {
+  echo ""
+  echo "Stopping servers..."
+  kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null
+  "$ROOT_DIR/stop.sh"
+  exit 0
+}
+trap cleanup INT TERM
 
 # Start backend
 echo "Starting backend on port 5180..."
 cd "$ROOT_DIR/backend" && ./mvnw spring-boot:run &
 BACKEND_PID=$!
 
-# Wait for backend to start
 echo "Waiting for backend to start..."
 sleep 15
 
@@ -31,5 +39,4 @@ echo "Swagger:  http://localhost:5180/swagger-ui/index.html"
 echo ""
 echo "Press Ctrl+C to stop both servers"
 
-# Wait for both processes
 wait $BACKEND_PID $FRONTEND_PID
